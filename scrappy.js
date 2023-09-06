@@ -1,18 +1,19 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
-const bodyParser = require("body-parser"); // Import body-parser
+const puppeteer = require("puppeteer-core"); // Use puppeteer-core
+const bodyParser = require("body-parser");
 const app = express();
 
 // Add body-parser middleware to parse JSON request bodies
 app.use(bodyParser.json());
 
 // Define a route for scraping
-app.post("/scrape", async (req, res) => { // Change route to accept POST requests
-  const { username, password } = req.body; // Extract username and password from request body
+app.post("/scrape", async (req, res) => {
+  const { username, password } = req.body;
   try {
-    const data = await loginAndScrape(username, password); // Pass username and password to the scraping function
-    res.json(data); // Send the scraped data as JSON response
+    const data = await loginAndScrape(username, password);
+    res.json(data);
   } catch (error) {
+    console.error(error); // Log the error for debugging
     res.status(500).json({ error: "An error occurred" });
   }
 });
@@ -22,35 +23,33 @@ const loginAndScrape = async (username, password) => {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: false,
-      defaultViewport: null,
+      headless: true, // Use headless mode (no UI)
+      executablePath: process.env.CHROME_BIN || null, // Use the provided headless Chrome instance on Vercel
+      args: ["--no-sandbox", "--disable-setuid-sandbox"], // Additional args to run on Vercel
     });
 
     const page = await browser.newPage();
 
-    // Navigate to the login page
     await page.goto("https://fallzabdesk.szabist-isb.edu.pk/", {
       waitUntil: "domcontentloaded",
     });
 
-    // Fill in the username and password inputs
     await page.type('input[name="txtLoginName"]', username);
     await page.type('input[name="txtPassword"]', password);
 
-    // Click the login button
     await page.click('img[alt="ZABDESK Login"]');
 
-    // Wait for the login to complete (you may need to adjust this)
-    await page.waitForNavigation();
+   
 
-    // Navigate to the specific page
-    await page.goto("https://fallzabdesk.szabist-isb.edu.pk/Student/QryCourseRecapSheet.asp", {
-      waitUntil: "domcontentloaded",
-    });
+    await page.goto(
+      "https://fallzabdesk.szabist-isb.edu.pk/Student/QryCourseRecapSheet.asp",
+      {
+        waitUntil: "domcontentloaded",
+      }
+    );
 
-    // Extract data from the provided HTML code
     const data = await page.evaluate(() => {
-      const elements = Array.from(document.querySelectorAll('td'));
+      const elements = Array.from(document.querySelectorAll("td"));
       let name = "N/A";
       let reg = "N/A";
       let semester = "N/A";
@@ -83,8 +82,7 @@ const loginAndScrape = async (username, password) => {
   }
 };
 
-// Start the Express app on a specific port (e.g., 3000)
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

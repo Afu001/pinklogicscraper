@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [{ "src": "scrappy.js", "use": "@vercel/node" }],
+  "routes": [
+    {
+      "src": "/scrape",
+      "dest": "/scrappy.js"
+    }
+  ]
+}

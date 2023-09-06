@@ -22,10 +22,13 @@ app.post("/scrape", async (req, res) => {
 const loginAndScrape = async (username, password) => {
   let browser;
   try {
+    // Specify the executable path for Chromium on Vercel
+    const executablePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
+
     browser = await puppeteer.launch({
-      headless: true, // Use headless mode (no UI)
-      executablePath: process.env.CHROME_BIN || null, // Use the provided headless Chrome instance on Vercel
-      args: ["--no-sandbox", "--disable-setuid-sandbox"], // Additional args to run on Vercel
+      headless: true,
+      executablePath, // Use the provided headless Chrome instance on Vercel
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
@@ -38,8 +41,6 @@ const loginAndScrape = async (username, password) => {
     await page.type('input[name="txtPassword"]', password);
 
     await page.click('img[alt="ZABDESK Login"]');
-
-   
 
     await page.goto(
       "https://fallzabdesk.szabist-isb.edu.pk/Student/QryCourseRecapSheet.asp",
